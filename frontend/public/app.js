@@ -5,7 +5,7 @@
 // and the browser runs outside it. See README.md.
 const BACKEND_URL = "http://localhost:3000";
 
-fetch(`${BACKEND_URL}/notes`)
+fetch(`${BACKEND_URL}/v1/notes`)
   .then((res) => res.json())
   .then((notes) => {
     const list = document.getElementById("notes");

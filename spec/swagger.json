@@ -1,0 +1,164 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Notes Service API",
+    "version": "1.0.0",
+    "description": "REST API for notes. Every note has a numeric id, a title and a body."
+  },
+  "servers": [{ "url": "http://localhost:3000" }],
+  "tags": [{ "name": "Notes" }],
+  "paths": {
+    "/v1/notes": {
+      "get": {
+        "tags": ["Notes"],
+        "summary": "List all notes",
+        "operationId": "listNotes",
+        "responses": {
+          "200": {
+            "description": "All notes",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Note" } },
+                "example": [
+                  { "id": 1, "title": "Welcome", "body": "This note is read from MongoDB, not hardcoded." },
+                  { "id": 2, "title": "Second note", "body": "Swapped in by changing one require(...) line." }
+                ]
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "post": {
+        "tags": ["Notes"],
+        "summary": "Create a note",
+        "operationId": "createNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NewNote" },
+              "example": { "title": "Shopping", "body": "Milk, bread, coffee" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Note" },
+                "example": { "id": 3, "title": "Shopping", "body": "Milk, bread, coffee" }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON, or title/body is missing",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "invalidJson": {
+                    "summary": "Body is not valid JSON",
+                    "value": { "error": "Invalid JSON body" }
+                  },
+                  "missingFields": {
+                    "summary": "title or body is missing or empty",
+                    "value": { "error": "title and body are required" }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/v1/notes/{id}": {
+      "get": {
+        "tags": ["Notes"],
+        "summary": "Get one note by id",
+        "operationId": "getNote",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Numeric note id",
+            "schema": { "type": "integer", "minimum": 1 },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The note",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Note" },
+                "example": { "id": 1, "title": "Welcome", "body": "This note is read from MongoDB, not hardcoded." }
+              }
+            }
+          },
+          "404": {
+            "description": "No note with that id exists (or the id is not a number)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "noteNotFound": {
+                    "summary": "Numeric id that does not exist",
+                    "value": { "error": "Note not found" }
+                  },
+                  "nonNumericId": {
+                    "summary": "Id is not a number, e.g. /v1/notes/abc",
+                    "value": { "error": "Not found" }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Note": {
+        "type": "object",
+        "required": ["id", "title", "body"],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "Welcome" },
+          "body": { "type": "string", "example": "This is the note text." }
+        }
+      },
+      "NewNote": {
+        "type": "object",
+        "required": ["title", "body"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "example": "Shopping" },
+          "body": { "type": "string", "minLength": 1, "example": "Milk, bread, coffee" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string", "example": "Note not found" }
+        }
+      }
+    },
+    "responses": {
+      "InternalError": {
+        "description": "Something went wrong on the server, e.g. the database could not be reached",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "Internal server error" }
+          }
+        }
+      }
+    }
+  }
+}
